@@ -16,14 +16,15 @@ from pathlib import Path
 try:
     from openpyxl import load_workbook
 except ModuleNotFoundError:
-    # 2026-10-05：PATH 上的 python 可能是没装 openpyxl 的虚拟环境（本机 hermes venv 就是），
-    # 直接抛裸栈会让人误以为素材包坏了。这里给一条能照做的提示，仍按硬错误 exit 1。
+    # PATH 上的 python 可能是没装 openpyxl 的虚拟环境；直接抛裸栈会让人误以为素材包坏了。
+    # 这里给能照做的提示（不写死任何本机路径），仍按硬错误 exit 1。
     sys.stderr.write(
         "★ 当前解释器没有 openpyxl：%s\n"
-        "  不要用这个 python 跑本脚本。改用装了 openpyxl 的解释器，例如本机：\n"
-        r"     <your-python.exe>" "\n"
-        "  或把它写进 skill 根目录 config.json 的 \"python\" 字段（resolve_env.ps1 会优先使用）。\n"
-        "  安装：<该解释器> -m pip install openpyxl\n" % sys.executable
+        "  不要用这个 python 跑本脚本。处理方式任选其一：\n"
+        "    1) 换一个装了 openpyxl 的解释器（<该解释器> -m pip install openpyxl 也行）\n"
+        "    2) 设环境变量 PDD_PYTHON=<带 openpyxl 的 python.exe>\n"
+        "    3) 在 DSH 插件配置里写 pythonPath（插件会把它注入 PDD_PYTHON）\n"
+        % sys.executable
     )
     raise SystemExit(1)
 

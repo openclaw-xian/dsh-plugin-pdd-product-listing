@@ -88,7 +88,7 @@ _backup/ 里的 `*.bak` 是历史回滚副本，**给使用者可以直接忽略
 **A. 运行时（最容易一开工就挂）**
 - **`python` 必须用带 openpyxl 的解释器**。本机 PATH 上的 `python` 是 hermes venv（3.11.9，**没有 openpyxl**），
   照文档写 `python scripts/read_excel.py ...` 直接 `ModuleNotFoundError`。
-  实测可用：`<your-python.exe>`（openpyxl 3.1.5）。
+  实测可用：`<你的 python.exe 路径>`（openpyxl 3.1.5）。
   最省事的办法是把绝对路径写进 `config.json` 的 `python` 字段（`resolve_env.ps1` 会优先用它）。
 - **Node 侧不必依赖 skill 内的 `tools/`**：本机 `playwright-core` 可解析、且 Node 24 + Chrome 154 实测可用。
 - 端口 ↔ 店：**9226 店铺A（旧版页）/ 9227 店铺B / 9228 店铺C（新版页）**；连店前 `probeShop` 探活。
@@ -291,7 +291,8 @@ _backup/ 里的 `*.bak` 是历史回滚副本，**给使用者可以直接忽略
 0c2. **单图 ≤3MB**（2026-09-30 ZDT-003 实测）：拼多多拒绝任何 >3MB 的图片（文案「上传图片大小不能超过 3MB」）。`build_product.py` 已内置预检，超限 exit 6，禁止连店。预览图常见坑：1024×1024 PNG 恰 3164952 字节（3.02MB）。处理：缩到 ≤800×800 + PNG optimize，目标 <2.5MB；JPEG q88 兜底。**只压 work 目录副本即可**，不必改素材包原图。
 0d. **流程中禁止「保存草稿」、禁止 `goto` 重开已填表单**（PE4 血坑 + GPVC-001 复发）：点保存/刷新/goto 会**冲掉内存里的上传与未服务端落库的字段**。GPVC-001 实测：填完后再 `goto` 草稿 URL 读回 → 详情 8/8 变 0/50、预览 16/16 变 0、品牌/参考价被清空，规格表也被重置。**读回一律当前页原地 `evaluate`/`inputValue`，禁止导航**。只有脚本中途彻底失败、且已确认服务端草稿字段时，才允许开完整 `id=&goods_id=` URL 续填；续填后也要当表单可能被重置来补。
 0c3. **数字类属性是直填输入框，不是下拉**（GPVC-001）：如「厚度」在表单上是 `input`（placeholder=请输入，label 常带 ` mm`），**直接 set 值**；不要走 `pickAttr`/`ST_selectValueSingle`。「中层厚度」等若是 `请选择` 下拉，数据包没有就留空，不要硬塞。
-0e. **图区只按计数器文本定位（分区锁死，禁止全文假成功）**：详情区必须锁定「快捷编辑/商品详情 + 已上传N/50」对应的 input[type=file]（eadZoneCounter / zoneByCounter 返回的 idx）；上传后用 waitForZoneCounter **只读该区计数器**，达到 N 才算成功。禁止 document.body.innerText 全文匹配「已上传N/M」（GPVC-001：全文假成功报 8/8、实际 0/50）。原文门禁：：`zoneByCounter(page, '商品轮播图'|'商品详情'|'包装标签图', 10|50)`；**禁止用 input index**（轮播/包装标签/辅助/详情同页易混）。分类以 **input 为中心**：取「最近的、只含单一区关键词的祖先」；**无法定区的输入一律不传**。上传用 `uploadZone()`（先传后删）；清区用 `clearZone()`（真实 hover 再点 `DeleteIcon`）。包装标签无素材必须 **0/10**（`validateForm.packaging_label`）。
+0e. **图区只按计数器文本定位（分区锁死，禁止全文假成功）**：详情区必须锁定「快捷编辑/商品详情 + 已上传N/50」对应的 input[type=file]（
+eadZoneCounter / zoneByCounter 返回的 idx）；上传后用 waitForZoneCounter **只读该区计数器**，达到 N 才算成功。禁止 document.body.innerText 全文匹配「已上传N/M」（GPVC-001：全文假成功报 8/8、实际 0/50）。原文门禁：：`zoneByCounter(page, '商品轮播图'|'商品详情'|'包装标签图', 10|50)`；**禁止用 input index**（轮播/包装标签/辅助/详情同页易混）。分类以 **input 为中心**：取「最近的、只含单一区关键词的祖先」；**无法定区的输入一律不传**。上传用 `uploadZone()`（先传后删）；清区用 `clearZone()`（真实 hover 再点 `DeleteIcon`）。包装标签无素材必须 **0/10**（`validateForm.packaging_label`）。
 0e2. **类目读回必须严格**：按 `>` 分段后，最后一段要**等于**目标叶子（`墙贴` ≠ `背景墙贴`）。新版预测类目页（9228）用推荐卡：精确全路径 → `以 > 叶子结尾` → 叶子精确，禁止 `includes` 模糊命中。表单页若没有「商品轮播图」input（主图在类目第一步已传），`forceMain` 只读计数器确认，**绝不改传别的区**。
 0f. **连接前置探活**：`connectShop` 会先 `probeShop(port)`。可能抛：`cdp_unreachable`（Chrome 没开/没开调试端口）、`cdp_too_many_tabs`（标签 >6 —— **先试 `connectShop(port, { maxTabs: 12 })` 放宽**：多余标签常是用户自己的营销/生意参谋页，关掉会打断他；实测 7 标签下放宽后 0.5s 连上。真的 `cdp_handshake_failed` 再报用户关标签）、`cdp_handshake_failed`（浏览器卡死）。**这三种都不要硬重试** —— 报用户处理。新版类目**第一步只有主图**时也不退任意图片 input：找不到「商品主图/商品轮播图」区块 → `main_block_not_found` 立即停。
 0f2. **★ 连店自动清理卡死/重复标签（2026-10-05 新增 · 已实测）**：`cdp_handshake_failed` 的头号原因是

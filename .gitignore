@@ -3,13 +3,15 @@ node_modules/
 __pycache__/
 *.pyc
 
-# 本机安装时写回的路径（不应进仓库）
+# 本机路径 / 私密文件：绝不入库
+skill/config.local.json
 skill/config.json.bak*
 .credentials.yaml
+*.secret
 session*.jsonl*
 *.log
 
-# 编辑器/系统
+# 编辑器 / 系统
 .DS_Store
 Thumbs.db
 .vscode/

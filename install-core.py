@@ -178,27 +178,27 @@ def main():
         log('已追加 cordis.patch.yml 配置')
 
     # 4) 依赖体检：找「带 openpyxl」的解释器（PATH 上的 python 未必是它）
+    #    ⚠️ 绝不把本机路径写进 skill/config.json —— 那是**入库模板**，写进去会被 git 带到
+    #       别人机器上（路径不存在，比留空更糟）。本机探测结果写到被 gitignore 的
+    #       skill/config.local.json，并打印环境变量的用法。
     print('')
     log('依赖体检')
     py_ok = find_python_with_openpyxl()
-    plugin_cfg = os.path.join(dest, 'skill', 'config.json')
+    local_cfg_path = os.path.join(dest, 'skill', 'config.local.json')
+    local_cfg = {}
+    if os.path.isfile(local_cfg_path):
+        try:
+            with open(local_cfg_path, encoding='utf-8') as f:
+                local_cfg = json.load(f)
+        except Exception:
+            local_cfg = {}
+
     if py_ok:
         print('    Python OK -> %s (%s)' % (py_ok[0], py_ok[1]))
-        if os.path.isfile(plugin_cfg):
-            try:
-                with open(plugin_cfg, encoding='utf-8') as f:
-                    cfg = json.load(f)
-                cfg['python'] = py_ok[0]
-                with open(plugin_cfg, 'w', encoding='utf-8', newline='\n') as f:
-                    json.dump(cfg, f, ensure_ascii=False, indent=2)
-                    f.write('\n')
-                print('    已把该解释器写进插件配置 skill/config.json 的 "python"')
-            except Exception as e:
-                warn('写插件配置失败（可用环境变量 PDD_PYTHON 代替）：%s' % e)
+        local_cfg['python'] = py_ok[0]
     else:
         warn('没找到带 openpyxl 的 Python —— read_excel.py 会失败。')
-        print('    处理：任一解释器执行  <python> -m pip install openpyxl')
-        print('    然后重跑本脚本，或在插件配置里指定 pythonPath。')
+        print('    处理：任一解释器执行  <python> -m pip install openpyxl，然后重跑本脚本。')
 
     home = os.path.expanduser('~')
     pw_candidates = [
@@ -206,14 +206,47 @@ def main():
         os.path.join(home, 'AppData', 'Roaming', 'npm', 'node_modules', 'playwright-core'),
         os.path.join(home, '.dsh', 'profiles', 'node_modules', 'playwright-core'),
     ]
-    hit = next((p for p in pw_candidates if os.path.isfile(os.path.join(p, 'package.json'))), None)
-    if hit:
-        print('    playwright-core OK -> %s' % hit)
+    pw = next((p for p in pw_candidates if os.path.isfile(os.path.join(p, 'package.json'))), None)
+    if pw:
+        print('    playwright-core OK -> %s' % pw)
+        local_cfg['playwright_core'] = pw
     else:
         warn('没找到 playwright-core：可在插件目录 npm i playwright-core，或在 DSH 插件配置里指定 playwrightCore')
 
-    # 5) 提示 Chrome
+    if local_cfg:
+        try:
+            with open(local_cfg_path, 'w', encoding='utf-8', newline='\n') as f:
+                json.dump(local_cfg, f, ensure_ascii=False, indent=2)
+                f.write('\n')
+            print('    本机探测结果已写入 skill/config.local.json（已 gitignore，不会进仓库）')
+        except Exception as e:
+            warn('写 config.local.json 失败：%s' % e)
+
+    # 顺手把入库模板里的本机路径清掉（防止被人误提交）
+    tpl_path = os.path.join(dest, 'skill', 'config.json')
+    try:
+        if os.path.isfile(tpl_path):
+            with open(tpl_path, encoding='utf-8') as f:
+                tpl = json.load(f)
+            dirty = [k for k in ('python', 'playwright_core', 'chrome', 'node', 'npm', 'workdir')
+                     if isinstance(tpl.get(k), str) and tpl[k].strip()]
+            if dirty:
+                for k in dirty:
+                    tpl[k] = ''
+                with open(tpl_path, 'w', encoding='utf-8', newline='\n') as f:
+                    json.dump(tpl, f, ensure_ascii=False, indent=2)
+                    f.write('\n')
+                print('    已清空 skill/config.json 里的本机路径字段（%s），避免误提交' % ', '.join(dirty))
+    except Exception:
+        pass
+
+    # 5) 提示 Chrome 与运行期覆盖方式
     print('    Chrome：需已登录店铺并以 --remote-debugging-port=<端口> 启动（技能自带 scripts/open_browser.ps1）')
+    print('')
+    print('    运行期覆盖路径用环境变量（子进程会继承）：')
+    print('      set PDD_PYTHON=<带 openpyxl 的 python.exe>')
+    print('      set PDD_PLAYWRIGHT=<playwright-core 目录>')
+    print('    或在 DSH 插件配置里写 pythonPath / playwrightCore / chromePath / shops')
 
     print('')
     log('完成。请重启 DeepSeek Harness，然后在会话里用 /pdd-product-listing（或直接说“把这个素材包上架到店铺C”）。')

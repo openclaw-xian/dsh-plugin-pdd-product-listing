@@ -60,7 +60,7 @@ const { chromium } = flow.resolvePlaywrightCore();
 `read_excel.py` 依赖 `openpyxl`。**PATH 上的 `python` 常常不是你要的那个**：本机就是 hermes venv
 （3.11.9，无 openpyxl），照文档写 `python scripts/read_excel.py ...` 会直接 `ModuleNotFoundError`。
 
-- 本机实测可用：`<your-python.exe>`（openpyxl 3.1.5）。
+- 本机实测可用：`<你的 python.exe 路径>`（openpyxl 3.1.5）。
 - **已写进 `config.json` 的 `python` 字段**（`resolve_env.ps1` 会优先用它），换机器改这一处即可。
 - `read_excel.py` 现在会在缺 openpyxl 时打印「换哪个解释器 / 怎么写 config」并 `exit 1`，不再是裸栈。
 - ⚠️ 注意：`resolve_env.ps1` 的自动探测**只做 `Get-Command python`，并不校验 openpyxl**
