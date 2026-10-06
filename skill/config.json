@@ -1,0 +1,32 @@
+{
+  "chrome": "",
+  "chrome_profile": "",
+  "node": "",
+  "npm": "",
+  "python": "",
+  "playwright_core": "",
+  "workdir": "",
+  "default_port": 9222,
+  "reuse_profile": true,
+  "code_template": "",
+  "allow_duplicate_codes": false,
+  "shops": {
+    "店铺A": { "port": 9226, "page_kind": "old" },
+    "店铺B": { "port": 9227, "page_kind": "unknown" },
+    "店铺C": { "port": 9228, "page_kind": "new" }
+  
+    },
+    "店铺B": {
+      "port": 9227,
+      "page_kind": "unknown"
+    },
+    "店铺C": {
+      "port": 9228,
+      "page_kind": "new"
+    }
+  },
+  "_note_shops": "端口与类目页形态（old/new）按店铺记这里，避免每次新会话重新问；page_kind 只是倾向，实际以 detectCategoryPage 为准",
+  "_note_python": "2026-10-05：PATH 上的 python 是 hermes venv（无 openpyxl），read_excel.py 会 ModuleNotFoundError。这里固定指向装了 openpyxl 的解释器；换机器请改这里或删掉改回自动探测",
+  "_note_allow_duplicate_codes": "build_product.py 生成 product.json 时会写入这个值（未给 listing 的 allow_duplicate_codes 时用它）。false=重复编码会让 validateForm.codes_exact 失败，属预期",
+  "_note": "空字符串 = 自动探测。插件首次加载时会把宿主探测到的 python / playwright_core 写回这里；也可在 DSH profile 的插件配置里指定 pythonPath / playwrightCore / chromePath / shops（会覆盖此文件）。"
+}

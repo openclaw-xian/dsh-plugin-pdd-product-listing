@@ -1,0 +1,16 @@
+# 依赖与构建产物
+node_modules/
+__pycache__/
+*.pyc
+
+# 本机安装时写回的路径（不应进仓库）
+skill/config.json.bak*
+.credentials.yaml
+session*.jsonl*
+*.log
+
+# 编辑器/系统
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

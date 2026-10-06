@@ -1,0 +1,43 @@
+{
+  "name": "dsh-plugin-pdd-product-listing",
+  "version": "1.0.0",
+  "description": "DeepSeek Harness 插件：内嵌「拼多多多店铺商品上架」技能（pdd-product-listing）。只填空与校验，绝不代替用户提交。",
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.mjs",
+  "exports": {
+    ".": {
+      "default": "./lib/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "skill",
+    "cordis.patch.yml",
+    "install.ps1",
+    "install-core.py",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh",
+    "dsh-plugin",
+    "pinduoduo",
+    "pdd",
+    "listing"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/schemastery": "*"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

@@ -1,0 +1,5 @@
+- insert:
+    - id: pdd-product-listing
+      # 必须是可被 loader import 的包名或路径。安装进 dsh profile 后按包名加载；
+      # 本地开发时也可直接写绝对路径。
+      name: "dsh-plugin-pdd-product-listing"
