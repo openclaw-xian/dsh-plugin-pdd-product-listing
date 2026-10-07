@@ -1,0 +1,4 @@
+{
+  "//": "技能脚本是 CommonJS。插件根 package.json 写了 \"type\": \"module\"，会把同包内所有 .js 都当 ES 模块，导致 pdd_flow.js 的 module.exports 报错（module is not defined）。这里显式声明本目录为 CommonJS，覆盖上层。",
+  "type": "commonjs"
+}
