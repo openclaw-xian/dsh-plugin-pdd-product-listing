@@ -1254,8 +1254,14 @@ async function readDropdownFieldValue(page, label) {
 
 async function packagingLabelState(page) {
   return page.evaluate(() => {
-    const t = document.body.innerText || '';
-    const m = t.match(/包装标签图[\s\S]{0,200}?已上传(\d+)\/(\d+)张/);
+    // ⚠️ 2026-10-20 实测：左侧「发布助手」引导面板里也有「包装标签图 暂无相关内容」，
+    // 旧正则从它往后 200 字内扫，会抢先匹配到**商品轮播图**的「已上传10/10」→
+    // packaging_label 假失败（这条链上 17 条正常、1 条报错）。
+    // 修法：先把引导面板（guide-* / fix-nav）从副本里删掉，再匹配真实表单里的计数。
+    const clone = document.body.cloneNode(true);
+    clone.querySelectorAll('[class*=guide], [class*=fix-nav]').forEach((e) => e.remove());
+    const t = (clone.innerText || '').replace(/\s+/g, ' ');
+    const m = t.match(/包装标签图[\s\S]{0,200}?已上传\s*(\d+)\s*\/\s*(\d+)\s*张?/);
     return m ? { uploaded: Number(m[1]), total: Number(m[2]) } : null;
   });
 }
