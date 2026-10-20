@@ -195,7 +195,9 @@ const run = (page, mode) => page.evaluate(async (a) => {
       await page.waitForTimeout(1200);
     }
     // 数字/直填属性（厚度等）不走下拉 pickAttr —— 表单上是 input，直接写值
-    const DIRECT_ATTR_LABELS = new Set(['厚度', '中层厚度', '平方克重', '重量', '尺寸']);
+    // ⚠️ 只放「确实是数字输入框」的标签。`中层厚度` 在墙贴类目是**下拉**（选项形如
+    //    `2.00mm（含）-2.50mm（不含）`），放进来会被写成空值（2026-10-20 实测）。
+    const DIRECT_ATTR_LABELS = new Set(['厚度', '平方克重', '重量']);
     const directAttrs = {};
     const dropAttrs = {};
     for (const [k, arr] of Object.entries(ATTRS || {})) {
@@ -227,6 +229,12 @@ const run = (page, mode) => page.evaluate(async (a) => {
             const inp = inputs.find((e) => /请输入|请选择|mm/.test(e.placeholder || '') || e.type === 'text');
             const target = inp;
             if (target) {
+              // 兜底：万一还是撞上下拉（placeholder=请选择 / readonly），不要往里写脏值
+              if (/请选择/.test(target.placeholder || '')) {
+                out.push({ label, value: null, how: 'skip_dropdown' });
+                done = true;
+                break;
+              }
               if (String(target.value) !== String(value)) {
                 setter.call(target, String(value));
                 target.dispatchEvent(new Event('input', { bubbles: true }));
