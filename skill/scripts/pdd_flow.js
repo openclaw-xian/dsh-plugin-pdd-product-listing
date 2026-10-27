@@ -3671,6 +3671,92 @@ async function pickAttr(page, label, value) {
   }, value);
   await page.waitForTimeout(300);
   if (picked) return { label, value, ok: true };
+
+  // ★ 2026-10-27 实测（背景墙贴·材质）：选项多的下拉是**滚动列表**，靠后的项没渲染，
+  //   直接按文本找不到（「聚乙烯(PE)」排在「聚丙烯(pp)」之后，页面上根本没渲染）。
+  //   办法：先在该属性行自己的输入框里打字过滤，等列表刷新后再按精确文本点击。
+  //   ⚠️ 不能用 document.activeElement —— 旧版页顶部有搜索框，焦点可能落在那里，
+  //      结果把「聚乙烯」打进顶部搜索框、属性仍旧为空（9226 实测）。
+  const typedOk = await page.evaluate(({ lab, val }) => {
+    const node = Array.from(document.querySelectorAll('*')).find(
+      (el) => el.offsetParent && !el.children.length && (el.textContent || '').trim() === lab);
+    if (!node) return false;
+    let row = node;
+    for (let i = 0; i < 6 && row; i++) {
+      row = row.parentElement;
+      if (!row) break;
+      const inp = row.querySelector('input[placeholder="请选择"], input:not([readonly])');
+      if (inp && inp.offsetParent && inp.type !== 'file') {
+        inp.focus();
+        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        setter.call(inp, String(val));
+        inp.dispatchEvent(new Event('input', { bubbles: true }));
+        return true;
+      }
+    }
+    return false;
+  }, { lab: label, val: value }).catch(() => false);
+  if (typedOk) {
+    await page.waitForTimeout(900);
+    const picked2 = await page.evaluate((val) => {
+      const els = Array.from(document.querySelectorAll('*')).filter(
+        (el) => el.offsetParent && el.children.length === 0 && (el.textContent || '').trim() === String(val)
+      );
+      if (!els.length) return false;
+      els[els.length - 1].click();
+      return true;
+    }, value).catch(() => false);
+    if (picked2) {
+      await page.waitForTimeout(400);
+      return { label, value, ok: true, how: 'typed_filter' };
+    }
+    // 过滤没命中：把该属性行输入框清空，避免残留过滤词影响后续属性
+    await page.evaluate((lab) => {
+      const node = Array.from(document.querySelectorAll('*')).find(
+        (el) => el.offsetParent && !el.children.length && (el.textContent || '').trim() === lab);
+      if (!node) return;
+      let row = node;
+      for (let i = 0; i < 6 && row; i++) {
+        row = row.parentElement;
+        if (!row) break;
+        const inp = row.querySelector('input[placeholder="请选择"], input:not([readonly])');
+        if (inp && inp.offsetParent && inp.type !== 'file') {
+          const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+          setter.call(inp, '');
+          inp.dispatchEvent(new Event('input', { bubbles: true }));
+          return;
+        }
+      }
+    }, label).catch(() => {});
+    await page.waitForTimeout(300);
+  }
+
+  // ★ 兜底（2026-10-27）：打字过滤也不生效时，**滚动下拉面板**把靠后的选项加载出来再点。
+  let scrolledHit = false;
+  for (let round = 0; round < 10 && !scrolledHit; round++) {
+    scrolledHit = await page.evaluate((val) => {
+      const els = Array.from(document.querySelectorAll('*')).filter(
+        (el) => el.offsetParent && el.children.length === 0 && (el.textContent || '').trim() === String(val));
+      if (els.length) { els[els.length - 1].click(); return true; }
+      // 找属性下拉面板（以「塑料/pvc/树脂」这类选项特征识别），滚动它
+      const panels = Array.from(document.querySelectorAll('[class*=dropdown], [class*=Dropdown], [role=listbox]'))
+        .filter((e) => e.offsetParent);
+      const panel = panels.find((p) => /塑料|pvc|树脂|涤纶/.test(p.innerText || ''));
+      if (panel) {
+        let target = panel;
+        for (const c of [panel, ...panel.querySelectorAll('*')]) {
+          if (c.scrollHeight > c.clientHeight + 10) { target = c; break; }
+        }
+        target.scrollTop = target.scrollTop + Math.max(120, target.clientHeight || 200);
+      }
+      return false;
+    }, value).catch(() => false);
+    if (!scrolledHit) await page.waitForTimeout(320);
+  }
+  if (scrolledHit) {
+    await page.waitForTimeout(400);
+    return { label, value, ok: true, how: 'scrolled' };
+  }
   // ★ 失败时**枚举该下拉的可选项**并回报（2026-09-30 补能力缺口）：
   // 原实现只返回 ok:false，调用方「知道失败、不知道能填什么」，
   // 于是 SKILL 里「写值前先枚举可用选项」这条指令不可执行。现在 options 直接给出候选。
