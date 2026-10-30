@@ -188,8 +188,8 @@ PDD_PRODUCT=./work/product.json PDD_PORT=9228 PDD_CATEGORY="家居饰品 > 贴�
 
 ## 八、2026-09-30 ZDT-003 补丁（自粘地毯 · 店铺A9226）
 
-> 草稿 goods_id=**1011453989574**（id=202481266215），validateForm allPass，**未提交**。
-> 裂变：同标题已有 1006083375131 → 标题加「款」+ 首图反转。
+> 草稿 goods_id=**10xxxxxxxxxx**（id=202481266215），validateForm allPass，**未提交**。
+> 裂变：同标题已有 10xxxxxxxxxx → 标题加「款」+ 首图反转。
 
 | 项 | 改动 | 位置 |
 |---|---|---|
@@ -203,8 +203,8 @@ PDD_PRODUCT=./work/product.json PDD_PORT=9228 PDD_CATEGORY="家居饰品 > 贴�
 
 ## 九、2026-09-30 GPVC-001 复发坑（店铺C9228）
 
-> 草稿 goods_id=**1011460754327**（id=202483324966），validateForm allPass，**未提交**。
-> 裂变：已有 1002128349521 同标题 → 标题加「新款」+ 去空格 + 首图反转。
+> 草稿 goods_id=**10xxxxxxxxxx**（id=202483324966），validateForm allPass，**未提交**。
+> 裂变：已有 10xxxxxxxxxx 同标题 → 标题加「新款」+ 去空格 + 首图反转。
 
 | 项 | 教训 |
 |---|---|
@@ -215,7 +215,7 @@ PDD_PRODUCT=./work/product.json PDD_PORT=9228 PDD_CATEGORY="家居饰品 > 贴�
 **接手注意**：若表单又被误刷新，按「原地补填」顺序：品牌 → 详情图（只补缺）→ 厚度直填 → 属性下拉 → ensureSpecTable → fillSku → 预览 → 参考价 → validateForm；**不要 goto**。
 ### 9.1 GPVC-001 整条重跑后补丁（同日）
 
-- 新草稿 goods_id=**1011464190438**（id=202484199972），查重 not_found，validateForm **allPass**，**未提交**。
+- 新草稿 goods_id=**10xxxxxxxxxx**（id=202484199972），查重 not_found，validateForm **allPass**，**未提交**。
 - 厚度直填生效：thickness=4 via direct_input。
 - **详情图陷阱**：uploadZoneFast 曾报 counter_uploaded=8，稍后读回 0/50。已原地重传到 8/50。
 - **validateForm 新增 detail_images**：读「快捷编辑 已上传N/50」与 payload detailCount 比对；unknown 不进 allPass 否决项。build_product.py 会写 product.detailCount。
@@ -223,7 +223,7 @@ PDD_PRODUCT=./work/product.json PDD_PORT=9228 PDD_CATEGORY="家居饰品 > 贴�
 
 ### 9.2 详情图容器定位 + 校验前补传（同日·最终）
 
-- 新草稿 goods_id=**1011472364575**（id=202487018655），validateForm **allPass**（detail_images 8=8），**未提交**。
+- 新草稿 goods_id=**10xxxxxxxxxx**（id=202487018655），validateForm **allPass**（detail_images 8=8），**未提交**。
 - **根因**：新页刚加载时详情 input 未稳定，全局 nth(idx) 会锁错；规格/SKU 阶段可能重渲染冲掉未落库的图。
 - **修法**：
   1. `locateZoneFileHandle`：在「快捷编辑 + 已上传N/50」**容器内**找 file input（不靠全局下标）；
@@ -237,8 +237,8 @@ PDD_PRODUCT=./work/product.json PDD_PORT=9228 PDD_CATEGORY="家居饰品 > 贴�
 
 ## 十一、2026-10-05 MZB-003 两店上架（店铺C9228 + 店铺A9226 · 各 72 SKU）
 
-> 店铺C草稿 `1012864855034`（224.4s）、店铺A草稿 `1013044536839`（230.9s），**两店 allPass、错误（0）**，未提交。
-> 两店原有同标题链接（店铺A `1006030110896`、店铺C `1008345583767`，均为 MZB-001 那批）→ 各自裂变。
+> 店铺C草稿 `10xxxxxxxxxx`（224.4s）、店铺A草稿 `10xxxxxxxxxx`（230.9s），**两店 allPass、错误（0）**，未提交。
+> 两店原有同标题链接（店铺A `10xxxxxxxxxx`、店铺C `10xxxxxxxxxx`，均为 MZB-001 那批）→ 各自裂变。
 
 ### 11.1 本轮修掉的真 bug：旧版页点到 AI 按钮（店铺A首跑整条报废）
 
@@ -264,7 +264,7 @@ PDD_PRODUCT=./work/product.json PDD_PORT=9228 PDD_CATEGORY="家居饰品 > 贴�
 - 真因：`run_listing.js:24` 是 `const P = D.product`，而**主图/详情图数组在 product.json 的顶层**
   （`D.main_images` / `D.detail_images`），不在 `product` 里 → `validateForm` 的 `productData.main_images`
   恒为空 → `expectMain = 0` → **整项被跳过**（不是「读不到判 unknown」）。
-  实测对照（店铺B草稿 `1013047463679`）：旧调用 `有 main_images 项 = false`；补齐两项后
+  实测对照（店铺B草稿 `10xxxxxxxxxx`）：旧调用 `有 main_images 项 = false`；补齐两项后
   `main_images = {status:'pass', value:'uploaded=10/10 expect=10'}`。
 - 已修：① `run_listing.js` 调用 `validateForm` 时显式补 `main_images` / `detail_images`；
   ② `pdd_flow.js` 的 expect 兼容「数组 / 数字 / `mainImageCount`」三种形态。
@@ -283,9 +283,9 @@ PDD_PRODUCT=./work/product.json PDD_PORT=9228 PDD_CATEGORY="家居饰品 > 贴�
 
 | 店 | 产品 | 草稿 goods_id | 耗时 | 备注 |
 |---|---|---|---|---|
-| 店铺B 9227 | MZB-001 | `1013048905237` | 248.3s | 品牌/包装方式首次生效 |
-| 店铺C 9228 | MZB-003（裂变） | `1013050921200` | 276.8s | ④ 详情首传失败 → ⑨b 补传 11/11 |
-| 店铺A 9226 | MZB-003（裂变） | `1013052548325` | 237.9s | 旧版页，主图 7/7 |
+| 店铺B 9227 | MZB-001 | `10xxxxxxxxxx` | 248.3s | 品牌/包装方式首次生效 |
+| 店铺C 9228 | MZB-003（裂变） | `10xxxxxxxxxx` | 276.8s | ④ 详情首传失败 → ⑨b 补传 11/11 |
+| 店铺A 9226 | MZB-003（裂变） | `10xxxxxxxxxx` | 237.9s | 旧版页，主图 7/7 |
 
 环境：本轮 9226/9227/9228 三个实例都出现过 **CDP 握手超时或直接掉线**（`sycm/goods_effect` 卡死页 / 实例退出），
 处置一律是**只重启该店实例**（保留原 `--user-data-dir`），2s 内恢复。
@@ -308,7 +308,7 @@ Node < 22 无全局 `WebSocket` → `supported:false` 自动跳过探活。
 
 ## 十二、2026-10-05 MZB-001@店铺B9227（72 SKU · 旧版页 · 修掉主图假失败与漏检）
 
-> 最终草稿 `goods_id=1012860923330`（commit id `202848159958`），**allPass 17/17、错误（0）**，未提交。
+> 最终草稿 `goods_id=10xxxxxxxxxx`（commit id `202848159958`），**allPass 17/17、错误（0）**，未提交。
 > 规模：颜色 6 × 款式 12 = **72 行**，耗时 **289.8s**（≈4.8 分钟）。
 
 ### 12.1 本轮抓到的两个真 bug（都已修）
@@ -333,7 +333,7 @@ Node < 22 无全局 `WebSocket` → `supported:false` 自动跳过探活。
 
 ## 十三、2026-10-05 GPVC-001 重跑（店铺C9228 · 16 SKU · 全绿）
 
-> 草稿 `goods_id=1012851756666`（commit id `202846161572`），**validateForm allPass（15/15）、错误（0）**，未提交。
+> 草稿 `goods_id=10xxxxxxxxxx`（commit id `202846161572`），**validateForm allPass（15/15）、错误（0）**，未提交。
 > 规模：颜色 8 × 款式 2 = **16 行**；耗时 **100.7s**（对比 72 行 274.8s）。
 
 ### 13.1 结论（跑通的那条路）
@@ -365,8 +365,8 @@ Node < 22 无全局 `WebSocket` → `supported:false` 自动跳过探活。
    正确做法是**直接重跑 run_listing.js 出新草稿（100s）**，废稿留给用户删。
 
 
-> 草稿 goods_id=**1011475841012**（id=202488065013），validateForm **allPass**，**未提交**。
-> 裂变：已有 1004662681298 同标题 → 标题去掉「家用」+「新款」，首图反转。
+> 草稿 goods_id=**10xxxxxxxxxx**（id=202488065013），validateForm **allPass**，**未提交**。
+> 裂变：已有 10xxxxxxxxxx 同标题 → 标题去掉「家用」+「新款」，首图反转。
 
 | 项 | 值 |
 |---|---|
